@@ -167,18 +167,76 @@ document.querySelector(".tabs").addEventListener("click", (e) => {
 });
 
 // ---- load ----
+let lastLoad = 0;
 async function load() {
   const bust = `?t=${Date.now()}`;
   try {
     const [rel, status] = await Promise.all([
-      fetch("data/releases.json" + bust).then((r) => r.json()),
-      fetch("data/status.json" + bust).then((r) => r.json()).catch(() => null),
+      fetch("data/releases.json" + bust, { cache: "no-store" }).then((r) => r.json()),
+      fetch("data/status.json" + bust, { cache: "no-store" }).then((r) => r.json()).catch(() => null),
     ]);
+    const before = new Set(releases.map((r) => r.key));
     releases = rel; renderStatus(status); render();
+    lastLoad = Date.now();
+    return before.size ? rel.filter((r) => !before.has(r.key) && !r.is_list_only && r.genres.length).length : 0;
   } catch {
     $("#status").className = "status stale";
     $("#status").textContent = "offline";
+    return null;
   }
 }
 load();
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+let swReg = null;
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").then((r) => (swReg = r)).catch(() => {});
+
+// ---- pull to refresh (like X / Instagram) ----
+const ptr = $("#ptr");
+const PULL_MAX = 110, PULL_TRIGGER = 70;
+let startY = null, startX = 0, pull = 0, refreshing = false;
+
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => t.classList.remove("show"), 2200);
+}
+function setPull(px) {
+  pull = px;
+  ptr.style.transform = `translate(-50%, ${px - 44}px) rotate(${px * 3}deg)`;
+  ptr.style.opacity = Math.min(1, px / PULL_TRIGGER);
+  ptr.classList.toggle("ready", px >= PULL_TRIGGER);
+}
+async function refresh() {
+  if (refreshing) return;
+  refreshing = true;
+  ptr.classList.add("spinning");
+  ptr.style.transition = "transform .2s"; setPull(56);
+  swReg?.update().catch(() => {});          // also pick up a new version of the app itself
+  const [added] = await Promise.all([load(), new Promise((r) => setTimeout(r, 600))]); // spinner shows ≥0.6s
+  toast(added === null ? "Couldn't refresh — offline?" : added ? `${added} new release${added > 1 ? "s" : ""}` : "You're up to date");
+  ptr.classList.remove("spinning", "ready"); setPull(0);
+  setTimeout(() => (ptr.style.transition = ""), 250);
+  refreshing = false;
+}
+document.addEventListener("touchstart", (e) => {
+  startY = window.scrollY <= 0 && !refreshing && e.touches.length === 1 ? e.touches[0].clientY : null;
+  startX = e.touches[0].clientX;
+}, { passive: true });
+document.addEventListener("touchmove", (e) => {
+  if (startY === null) return;
+  const dy = e.touches[0].clientY - startY;
+  const dx = Math.abs(e.touches[0].clientX - startX);
+  if (!pull && dx > dy) { startY = null; return; }     // sideways swipe (e.g. genre chips): not a pull
+  if (dy <= 0 || window.scrollY > 0) { if (pull) setPull(0); return; }
+  e.preventDefault();                                   // stop the page bouncing while we pull
+  setPull(Math.min(PULL_MAX, dy * 0.5));                // resistance, like native apps
+}, { passive: false });
+document.addEventListener("touchend", () => {
+  if (startY === null) return;
+  startY = null;
+  if (pull >= PULL_TRIGGER) refresh();
+  else { ptr.style.transition = "transform .2s, opacity .2s"; setPull(0); setTimeout(() => (ptr.style.transition = ""), 250); }
+});
+// coming back to the app after a while also refreshes, so the feed is never stale when you open it
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && Date.now() - lastLoad > 10 * 60 * 1000) refresh();
+});

@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
   <header class="top">
@@ -29,8 +29,12 @@
     <div id="chips" class="chips" aria-label="Filter by genre"></div>
   </header>
 
+  <div id="ptr" class="ptr" aria-hidden="true">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16.5 10a6.5 6.5 0 1 1-2-4.7"/><path d="M16.5 3v3.5H13"/></svg>
+  </div>
   <main id="feed" class="feed"></main>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <script src="app.js?v=7"></script>
+  <script src="app.js?v=8"></script>
 </body>
 </html>

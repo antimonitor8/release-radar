@@ -83,3 +83,18 @@ h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -.03em; }
 .links-menu a span { color: var(--muted); font-size: 12px; }
 .cover .none { color: var(--muted); }
 button.cover { cursor: pointer; }
+
+/* ---------- pull to refresh ---------- */
+html, body { overscroll-behavior-y: contain; }   /* our own pull handling instead of the browser's */
+.ptr { position: fixed; z-index: 20; left: 50%; top: calc(env(safe-area-inset-top) + 8px); width: 40px; height: 40px;
+  border-radius: 50%; background: #1a1a1a; border: 1px solid var(--line-2); color: var(--muted);
+  display: grid; place-items: center; opacity: 0; transform: translate(-50%, -44px); pointer-events: none;
+  box-shadow: 0 6px 20px rgba(0,0,0,.5); }
+.ptr.ready { color: var(--text); }
+.ptr.spinning svg { animation: ptr-spin .7s linear infinite; }
+@keyframes ptr-spin { to { transform: rotate(360deg); } }
+.toast { position: fixed; z-index: 20; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 24px);
+  transform: translate(-50%, 20px); opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none;
+  background: var(--text); color: #000; font: 500 13px var(--sans); padding: 9px 16px; border-radius: 999px; white-space: nowrap; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { .ptr.spinning svg { animation-duration: 2s; } }
