@@ -39,14 +39,22 @@ function dayLabel(iso) {
 }
 
 // ---- status line: the "is it actually working?" signal ----
+let lastUpdated = "";
+// "7:30am" today, "yesterday 11pm", or "Thu 9:15pm"
+function when(iso) {
+  const d = new Date(iso), now = new Date();
+  const t = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).replace(" ", "").replace(":00", "").toLowerCase();
+  const days = Math.floor((new Date(now.toDateString()) - new Date(d.toDateString())) / 864e5);
+  return days === 0 ? t : days === 1 ? `yesterday ${t}` : `${d.toLocaleDateString("en-GB", { weekday: "short" })} ${t}`;
+}
 function renderStatus(status) {
   const el = $("#status");
   if (!status?.finished) { el.className = "status stale"; el.textContent = "no update data"; return; }
   const hours = (Date.now() - new Date(status.finished)) / 36e5;
-  const time = new Date(status.finished).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  lastUpdated = when(status.finished);
   const warn = status.ok === false ? " · warn" : "";
   if (hours > STALE_HOURS) { el.className = "status stale"; el.textContent = `stale · last run ${ago(status.finished)}`; }
-  else { el.className = "status"; el.textContent = `${time} · +${status.new_in_feed ?? 0}${warn}`; }
+  else { el.className = "status"; el.textContent = `Updated ${lastUpdated} · ${status.new_in_feed ?? 0} new${warn}`; }
   el.title = `Last run ${new Date(status.finished).toLocaleString()}`;
 }
 
@@ -212,7 +220,7 @@ async function refresh() {
   ptr.style.transition = "transform .2s"; setPull(56);
   swReg?.update().catch(() => {});          // also pick up a new version of the app itself
   const [added] = await Promise.all([load(), new Promise((r) => setTimeout(r, 600))]); // spinner shows ≥0.6s
-  toast(added === null ? "Couldn't refresh — offline?" : added ? `${added} new release${added > 1 ? "s" : ""}` : "You're up to date");
+  toast(added === null ? "Couldn't refresh — offline?" : added ? `${added} new release${added > 1 ? "s" : ""} · updated ${lastUpdated}` : `Up to date · updated ${lastUpdated}`);
   ptr.classList.remove("spinning", "ready"); setPull(0);
   setTimeout(() => (ptr.style.transition = ""), 250);
   refreshing = false;
