@@ -13,25 +13,30 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=13">
+  <link rel="stylesheet" href="style.css?v=14">
 </head>
 <body>
   <header class="top">
     <div class="bar">
       <h1>ISHAN’S RADAR</h1>
-      <p id="status" class="status" aria-live="polite">loading…</p>
+      <div class="bar-right">
+        <p id="status" class="status" aria-live="polite">loading…</p>
+        <button id="qOpen" class="q-open" aria-label="Search artist or album" aria-expanded="false" aria-controls="searchBox">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4.5 4.5"/></svg>
+        </button>
+      </div>
+      <div id="searchBox" class="search" hidden>
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4.5 4.5"/></svg>
+        <input id="q" type="search" placeholder="Search artist or album" aria-label="Search artist or album" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
+        <button id="qClose" class="q-clear" aria-label="Close search">
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4l10 10M14 4L4 14"/></svg>
+        </button>
+      </div>
     </div>
     <nav class="tabs" aria-label="Sections">
       <button data-tab="new" class="on">New</button>
       <button data-tab="saved">Saved <span id="savedCount"></span></button>
     </nav>
-    <div class="search">
-      <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4.5 4.5"/></svg>
-      <input id="q" type="search" placeholder="Search artist or album" aria-label="Search artist or album" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
-      <button id="qClear" class="q-clear" aria-label="Clear search" hidden>
-        <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4l10 10M14 4L4 14"/></svg>
-      </button>
-    </div>
     <div id="chips" class="chips" aria-label="Filter by genre"></div>
   </header>
 
@@ -41,6 +46,6 @@
   <main id="feed" class="feed"></main>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <script src="app.js?v=13"></script>
+  <script src="app.js?v=14"></script>
 </body>
 </html>

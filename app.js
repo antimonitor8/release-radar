@@ -153,16 +153,21 @@ function toggleSave(r) {
   store.set("saved", saved);
 }
 
-// ---- search ----
-const qInput = $("#q");
-function setQuery(v) {
-  query = v;
-  $("#qClear").hidden = !v;
-  render();
+// ---- search (icon top-right → expands into a text box; results update on every letter) ----
+const qInput = $("#q"), qBox = $("#searchBox"), qOpen = $("#qOpen");
+function openSearch() {
+  qBox.hidden = false; qOpen.setAttribute("aria-expanded", "true");
+  qInput.focus();
 }
-qInput.addEventListener("input", () => setQuery(qInput.value));
-qInput.addEventListener("keydown", (e) => { if (e.key === "Escape") { qInput.value = ""; setQuery(""); qInput.blur(); } });
-$("#qClear").addEventListener("click", () => { qInput.value = ""; setQuery(""); qInput.focus(); });
+function closeSearch() {
+  qInput.value = ""; qBox.hidden = true; qOpen.setAttribute("aria-expanded", "false");
+  if (query) { query = ""; render(); }
+  qOpen.focus({ preventScroll: true });
+}
+qOpen.addEventListener("click", openSearch);
+$("#qClose").addEventListener("click", closeSearch);
+qInput.addEventListener("input", () => { query = qInput.value; render(); window.scrollTo(0, 0); });
+qInput.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSearch(); if (e.key === "Enter") qInput.blur(); });
 
 // ---- events ----
 // only one LINKS menu open at a time; tapping elsewhere closes it
