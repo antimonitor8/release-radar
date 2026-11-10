@@ -62,9 +62,8 @@ function renderStatus(status) {
 function visible() {
   let list;
   if (tab === "saved") list = Object.values(saved).sort((a, b) => (b.date || "").localeCompare(a.date || ""));
-  else if (tab === "archive") list = releases.filter((r) => r.is_list_only && r.bandcamp);
   else list = releases.filter((r) => !r.is_list_only && r.genres.length && !skipped.has(r.key));
-  if (chosen.size && tab !== "archive") list = list.filter((r) => r.genres.some((g) => chosen.has(g)));
+  if (chosen.size) list = list.filter((r) => r.genres.some((g) => chosen.has(g)));
   return list;
 }
 
@@ -74,7 +73,6 @@ function renderChips() {
   $("#chips").innerHTML = `<button class="chip ${chosen.size ? "" : "on"}" data-g="">All</button>` +
     GENRES.filter((g) => counts[g] || chosen.has(g)).map((g) =>
       `<button class="chip ${chosen.has(g) ? "on" : ""}" data-g="${esc(g)}" aria-pressed="${chosen.has(g)}">${esc(g)}</button>`).join("");
-  $("#chips").hidden = tab === "archive";
 }
 
 // "LINKS" menu: every place you can open the album. Hidden entirely when there are none.
