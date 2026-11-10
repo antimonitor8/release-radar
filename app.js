@@ -59,7 +59,20 @@ function renderStatus(status) {
 }
 
 // ---- filtering ----
+let query = "";
+// case- and accent-insensitive ("bjork" finds "Björk", "mid" finds "Mið")
+const fold = (t) => String(t || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[ðÐ]/g, "d").toLowerCase();
+
 function visible() {
+  if (query) {
+    // search everything in the app (feed incl. skipped, plus Saved), ignoring tabs and genre filters
+    const q = fold(query).trim();
+    const pool = releases.filter((r) => !r.is_list_only && r.genres.length);
+    const keys = new Set(pool.map((r) => r.key));
+    for (const r of Object.values(saved)) if (!keys.has(r.key)) pool.push(r);
+    return pool.filter((r) => fold(`${r.artist} ${r.album}`).includes(q))
+      .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  }
   let list;
   if (tab === "saved") list = Object.values(saved).sort((a, b) => (b.date || "").localeCompare(a.date || ""));
   else list = releases.filter((r) => !r.is_list_only && r.genres.length && !skipped.has(r.key));
@@ -117,14 +130,16 @@ function render() {
   renderChips();
   const list = visible();
   $("#savedCount").textContent = Object.keys(saved).length || "";
+  $("#chips").hidden = !!query;
+  $("#feed").classList.toggle("searching", !!query);
   if (!list.length) {
-    $("#feed").innerHTML = `<p class="empty">${tab === "saved" ? "Nothing saved yet." : "Nothing here for this filter."}</p>`;
+    $("#feed").innerHTML = `<p class="empty">${query ? `No artist or album matching “${esc(query)}”.` : tab === "saved" ? "Nothing saved yet." : "Nothing here for this filter."}</p>`;
     return;
   }
   // group by day on the New tab
   const groups = [];
   for (const r of list) {
-    const label = tab === "new" ? dayLabel(r.date) : "";
+    const label = query ? "" : tab === "new" ? dayLabel(r.date) : "";
     if (!groups.length || groups.at(-1).label !== label) groups.push({ label, items: [] });
     groups.at(-1).items.push(r);
   }
@@ -137,6 +152,17 @@ function toggleSave(r) {
   if (saved[r.key]) delete saved[r.key]; else saved[r.key] = r;
   store.set("saved", saved);
 }
+
+// ---- search ----
+const qInput = $("#q");
+function setQuery(v) {
+  query = v;
+  $("#qClear").hidden = !v;
+  render();
+}
+qInput.addEventListener("input", () => setQuery(qInput.value));
+qInput.addEventListener("keydown", (e) => { if (e.key === "Escape") { qInput.value = ""; setQuery(""); qInput.blur(); } });
+$("#qClear").addEventListener("click", () => { qInput.value = ""; setQuery(""); qInput.focus(); });
 
 // ---- events ----
 // only one LINKS menu open at a time; tapping elsewhere closes it
