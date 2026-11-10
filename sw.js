@@ -1,6 +1,6 @@
 // Minimal service worker: makes the app installable and opens offline with the last data.
 // Data is network-first so you always see the newest daily update when online.
-const CACHE = "rr-v10";
+const CACHE = "rr-v11";
 const SHELL = ["./", "index.html", "style.css", "app.js", "manifest.webmanifest", "icon.svg"];
 
 self.addEventListener("install", (e) => e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting())));

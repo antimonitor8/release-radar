@@ -82,6 +82,7 @@ function linksMenu(r, label) {
   const links = [];
   if (r.bandcamp?.url) links.push(["Bandcamp", r.bandcamp.url]);
   if (r.spotify) links.push(["Spotify", r.spotify]);
+  if (r.apple) links.push(["Apple Music", r.apple]);
   if (!links.length) return "";
   return `<details class="links">
     <summary aria-label="Links for ${esc(label)}">Links</summary>
@@ -93,7 +94,7 @@ function linksMenu(r, label) {
 function card(r) {
   const img = art(r);
   const label = `${r.artist} — ${r.album}`;
-  const hasLinks = !!(r.bandcamp?.url || r.spotify);
+  const hasLinks = !!(r.bandcamp?.url || r.spotify || r.apple);
   const pic = img ? `<img loading="lazy" src="${img}" alt="">` : `<span class="none">no artwork</span>`;
   // no in-app playback: tapping the cover opens the album's LINKS menu
   const cover = hasLinks
