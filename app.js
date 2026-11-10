@@ -73,7 +73,7 @@ function renderChips() {
   const counts = Object.fromEntries(GENRES.map((g) => [g, pool.filter((r) => r.genres.includes(g)).length]));
   $("#chips").innerHTML = `<button class="chip ${chosen.size ? "" : "on"}" data-g="">All</button>` +
     GENRES.filter((g) => counts[g] || chosen.has(g)).map((g) =>
-      `<button class="chip ${chosen.has(g) ? "on" : ""}" data-g="${esc(g)}" aria-pressed="${chosen.has(g)}">${esc(g)}<span class="n">${counts[g]}</span></button>`).join("");
+      `<button class="chip ${chosen.has(g) ? "on" : ""}" data-g="${esc(g)}" aria-pressed="${chosen.has(g)}">${esc(g)}</button>`).join("");
   $("#chips").hidden = tab === "archive";
 }
 
