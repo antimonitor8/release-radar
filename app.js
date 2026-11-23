@@ -70,7 +70,10 @@ function visible() {
     const pool = releases.filter((r) => !r.is_list_only && r.genres.length);
     const keys = new Set(pool.map((r) => r.key));
     for (const r of Object.values(saved)) if (!keys.has(r.key)) pool.push(r);
-    return pool.filter((r) => fold(`${r.artist} ${r.album}`).includes(q))
+    // also matches the Bandcamp page an album lives on (e.g. a label's subdomain), so typing a label name finds
+    // its releases. Uses only the album's existing Bandcamp link; nothing extra is shown or published.
+    const home = (r) => (r.bandcamp?.url || "").match(/^https?:\/\/([^.]+)\.bandcamp\.com/)?.[1]?.replace(/records?$|music$/, " $&") || "";
+    return pool.filter((r) => fold(`${r.artist} ${r.album} ${home(r)}`).includes(q))
       .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
   }
   let list;
