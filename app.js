@@ -60,6 +60,9 @@ function renderStatus(status) {
 
 // ---- filtering ----
 let query = "";
+// last visit: albums that arrived after it get a NEW badge (kept for this whole session, then rolls forward)
+let prevVisit = store.get("lastVisit", null);
+store.set("lastVisit", new Date().toISOString());
 // case- and accent-insensitive ("bjork" finds "Björk", "mid" finds "Mið")
 const fold = (t) => String(t || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[ðÐ]/g, "d").toLowerCase();
 
@@ -77,6 +80,7 @@ function visible() {
   if (tab === "saved") list = Object.values(saved).sort((a, b) => (b.date || "").localeCompare(a.date || ""));
   else list = releases.filter((r) => !r.is_list_only && r.genres.length && !skipped.has(r.key));
   if (chosen.size) list = list.filter((r) => r.genres.some((g) => chosen.has(g)));
+  if (tab === "new") list = list.slice().sort((a, b) => (b.added || b.date || "").localeCompare(a.added || a.date || ""));
   return list;
 }
 
@@ -111,7 +115,8 @@ function card(r) {
   const cover = hasLinks
     ? `<button class="cover" data-act="links" aria-label="Show links for ${esc(label)}">${pic}</button>`
     : `<div class="cover">${pic}</div>`;
-  return `<article class="card ${heard.has(r.key) ? "heard" : ""}" data-key="${esc(r.key)}">
+  const isNew = tab === "new" && !query && prevVisit && (r.added || "") > prevVisit;
+  return `<article class="card ${heard.has(r.key) ? "heard" : ""} ${isNew ? "is-new" : ""}" data-key="${esc(r.key)}">
     ${cover}
     <div class="meta">
       <div class="titles">
@@ -139,7 +144,7 @@ function render() {
   // group by day on the New tab
   const groups = [];
   for (const r of list) {
-    const label = query ? "" : tab === "new" ? dayLabel(r.date) : "";
+    const label = query ? "" : tab === "new" ? dayLabel(r.added || r.date) : "";
     if (!groups.length || groups.at(-1).label !== label) groups.push({ label, items: [] });
     groups.at(-1).items.push(r);
   }
@@ -215,6 +220,11 @@ async function load() {
     ]);
     const before = new Set(releases.map((r) => r.key));
     releases = rel; renderStatus(status); render();
+    if (prevVisit && !load.announced) {
+      load.announced = true; load.justAnnounced = true;
+      const n = rel.filter((r) => !r.is_list_only && r.genres.length && (r.added || "") > prevVisit && !skipped.has(r.key)).length;
+      toast(n ? `${n} new since your last visit` : "Nothing new since your last visit");
+    }
     lastLoad = Date.now();
     return before.size ? rel.filter((r) => !before.has(r.key) && !r.is_list_only && r.genres.length).length : 0;
   } catch {
@@ -250,7 +260,8 @@ async function refresh() {
   ptr.style.transition = "transform .2s"; setPull(56);
   swReg?.update().catch(() => {});          // also pick up a new version of the app itself
   const [added] = await Promise.all([load(), new Promise((r) => setTimeout(r, 600))]); // spinner shows ≥0.6s
-  toast(added === null ? "Couldn't refresh — offline?" : added ? `${added} new release${added > 1 ? "s" : ""} · updated ${lastUpdated}` : `Up to date · updated ${lastUpdated}`);
+  if (load.justAnnounced) load.justAnnounced = false;   // the "since your last visit" message already showed
+  else toast(added === null ? "Couldn't refresh — offline?" : added ? `${added} new release${added > 1 ? "s" : ""} · updated ${lastUpdated}` : `Up to date · updated ${lastUpdated}`);
   ptr.classList.remove("spinning", "ready"); setPull(0);
   setTimeout(() => (ptr.style.transition = ""), 250);
   refreshing = false;
@@ -276,5 +287,10 @@ document.addEventListener("touchend", () => {
 });
 // coming back to the app after a while also refreshes, so the feed is never stale when you open it
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible" && Date.now() - lastLoad > 10 * 60 * 1000) refresh();
+  if (document.visibilityState === "visible" && Date.now() - lastLoad > 10 * 60 * 1000) {
+    // reopening the app after a while counts as a new visit: NEW badges = what arrived since you last looked
+    prevVisit = store.get("lastVisit", prevVisit); store.set("lastVisit", new Date().toISOString());
+    load.announced = false;
+    refresh();
+  }
 });
