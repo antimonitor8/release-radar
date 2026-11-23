@@ -116,7 +116,3 @@ html, body { overscroll-behavior-y: contain; }   /* our own pull handling instea
 .q-clear:hover { color: var(--text); }
 .chips[hidden] { display: none; }
 @media (prefers-reduced-motion: reduce) { .search { animation: none; } }
-
-/* ---------- NEW since last visit ---------- */
-.card.is-new .cover::after { content: "NEW"; position: absolute; top: 8px; left: 8px; padding: 3px 7px; border-radius: 4px;
-  background: var(--text); color: #000; font: 600 10px var(--mono); letter-spacing: .08em; }
